@@ -11,7 +11,7 @@ LAYER_NAME  ?= codex-cli
 # Build
 # ============================================================================
 
-build: ## Build the layer via GitHub Actions (trigger, wait, download)
+build: ## Trigger CI build, wait, and download the release artifact
 	@echo "==> Triggering build-layer workflow..."
 	@gh workflow run build-layer.yml
 	@echo "==> Waiting for workflow to start..."
@@ -19,13 +19,18 @@ build: ## Build the layer via GitHub Actions (trigger, wait, download)
 	@RUN_ID=$$(gh run list --workflow=build-layer.yml --limit=1 --json databaseId --jq '.[0].databaseId'); \
 	echo "==> Waiting for run $$RUN_ID to complete..."; \
 	gh run watch "$$RUN_ID" --exit-status; \
-	echo "==> Downloading layer artifact..."; \
-	rm -rf /tmp/codex-layer-dl; \
-	gh run download "$$RUN_ID" --name codex-layer --dir /tmp/codex-layer-dl; \
-	mv /tmp/codex-layer-dl/codex-layer.zip $(LAYER_ZIP); \
-	rm -rf /tmp/codex-layer-dl; \
+	echo "==> Downloading layer from latest release..."; \
+	rm -f $(LAYER_ZIP); \
+	gh release download latest --pattern 'codex-layer.zip' --output $(LAYER_ZIP); \
 	echo "==> Layer downloaded to $(LAYER_ZIP)"; \
 	du -sh $(LAYER_ZIP)
+
+download: ## Download the latest release artifact (no rebuild)
+	@echo "==> Downloading layer from latest release..."
+	@rm -f $(LAYER_ZIP)
+	@gh release download latest --pattern 'codex-layer.zip' --output $(LAYER_ZIP)
+	@echo "==> Layer downloaded to $(LAYER_ZIP)"
+	@du -sh $(LAYER_ZIP)
 
 build-local: ## Build the layer locally (requires yq, gh, docker/podman)
 	@scripts/build-layer.sh
@@ -66,4 +71,4 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make \033[36m<target>\033[0m\n\n"} \
 		/^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-.PHONY: build build-local publish inspect clean help
+.PHONY: build download build-local publish inspect clean help

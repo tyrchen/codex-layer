@@ -7,6 +7,10 @@
 #
 # Assets are declared in assets.yaml at the repo root.
 # To add a new tool, edit assets.yaml and push — no workflow changes needed.
+#
+# The layer ZIP is published as a GitHub Release asset (tag: latest).
+# Other repos can download it via:
+#   gh release download latest --repo tyrchen/codex-layer --pattern 'codex-layer.zip'
 
 name: build-layer
 
@@ -19,6 +23,9 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write
 
 env:
   LAYER_DIR: /tmp/codex-layer
@@ -46,9 +53,36 @@ jobs:
           LAYER_ZIP: ${{ env.LAYER_ZIP }}
         run: scripts/build-layer.sh
 
-      - name: Upload layer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: codex-layer
-          path: ${{ env.LAYER_ZIP }}
-          retention-days: 90
+      - name: Generate release tag
+        id: tag
+        run: echo "tag=build-$(date -u +%Y%m%d-%H%M%S)" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          # Delete existing 'latest' release if present
+          gh release delete latest --yes 2>/dev/null || true
+          git tag -f latest
+          git push origin latest --force
+
+          gh release create latest \
+            --title "Latest Codex CLI Lambda Layer" \
+            --notes "Built from \`${{ github.sha }}\` on $(date -u +%Y-%m-%d).
+
+          ## Contents
+          See [assets.yaml](https://github.com/${{ github.repository }}/blob/master/assets.yaml) for the full list.
+
+          ## Usage
+          \`\`\`bash
+          gh release download latest --repo ${{ github.repository }} --pattern 'codex-layer.zip'
+          \`\`\`" \
+            --latest \
+            "${{ env.LAYER_ZIP }}#codex-layer.zip"
+
+          # Also create a timestamped release for history
+          gh release create "$TAG" \
+            --title "Codex CLI Lambda Layer ($TAG)" \
+            --notes "Built from \`${{ github.sha }}\`." \
+            "${{ env.LAYER_ZIP }}#codex-layer.zip"
