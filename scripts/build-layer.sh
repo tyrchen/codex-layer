@@ -113,7 +113,7 @@ else
 
   while IFS= read -r lib; do
     [ "$lib" = "null" ] && continue
-    CMD+=" && find /usr/lib64 -name \"$lib\" -exec cp {} /out/lib/ \\;"
+    CMD+=" && cp /usr/lib64/$lib /out/lib/ 2>/dev/null || true"
   done < <(yq '.system.libs[]' "$ASSETS_FILE" 2>/dev/null || true)
 
   echo "==> Extracting system packages from AL2023"
