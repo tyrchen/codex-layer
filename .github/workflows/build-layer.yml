@@ -13,7 +13,7 @@ name: build-layer
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [master]
     paths: [assets.yaml]
 
 concurrency:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Build layer
         env:
-          GH_TOKEN: ${{ secrets.CODEX_REPO_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           LAYER_DIR: ${{ env.LAYER_DIR }}
           LAYER_ZIP: ${{ env.LAYER_ZIP }}
         run: scripts/build-layer.sh
