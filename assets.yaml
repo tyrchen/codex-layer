@@ -46,6 +46,12 @@ tools:
     tag: "jq-{version}"
     asset: "jq-linux-arm64"
 
+  - name: pup
+    repo: datadog-labs/pup
+    version: "0.24.0"
+    asset: "pup_{version}_Linux_arm64.tar.gz"
+    extract_path: "pup"
+
 # ---------------------------------------------------------------------------
 # System packages extracted from Amazon Linux 2023 (ARM64 container)
 # ---------------------------------------------------------------------------
