@@ -52,6 +52,17 @@ chmod +x "$LAYER_DIR/bin/$CODEX_BIN"
 rm -rf /tmp/codex-artifact
 ls -lh "$LAYER_DIR/bin/$CODEX_BIN"
 
+# Extract codex version (try --version, fall back to commit SHA)
+CODEX_VERSION=$("$LAYER_DIR/bin/$CODEX_BIN" --version 2>/dev/null | awk '{print $NF}' || true)
+if [ -z "$CODEX_VERSION" ] || [ "$CODEX_VERSION" = "0.0.0" ]; then
+  # Use the commit SHA from the latest lambda-build run
+  CODEX_VERSION=$(gh run list --repo "$CODEX_REPO" --workflow lambda-build --status success --limit 1 --json headSha --jq '.[0].headSha' | head -c 8)
+fi
+echo "==> Codex version: $CODEX_VERSION"
+
+# Write version file for the workflow to pick up
+echo "$CODEX_VERSION" > "$LAYER_DIR/codex-version.txt"
+
 # ── 2. GitHub Release tools ─────────────────────────────────────────────────
 TOOL_COUNT=$(yq '.tools | length' "$ASSETS_FILE")
 for i in $(seq 0 $((TOOL_COUNT - 1))); do
