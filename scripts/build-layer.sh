@@ -78,14 +78,14 @@ for i in $(seq 0 $((TOOL_COUNT - 1))); do
 
   if [[ "$ASSET" == *.tar.gz ]] || [[ "$ASSET" == *.tgz ]]; then
     if [ -n "$EXTRACT_PATH" ] && [ "$EXTRACT_PATH" != "null" ]; then
-      curl -sL "$URL" | tar xz --strip-components="$STRIP" -C "$LAYER_DIR/bin/" "$EXTRACT_PATH"
+      curl -sfL "$URL" | tar xz --strip-components="$STRIP" -C "$LAYER_DIR/bin/" "$EXTRACT_PATH"
     elif [ "$STRIP" != "0" ]; then
-      curl -sL "$URL" | tar xz --strip-components="$STRIP" -C "$LAYER_DIR/bin/"
+      curl -sfL "$URL" | tar xz --strip-components="$STRIP" -C "$LAYER_DIR/bin/"
     else
-      curl -sL "$URL" | tar xz -C "$LAYER_DIR/bin/"
+      curl -sfL "$URL" | tar xz -C "$LAYER_DIR/bin/"
     fi
   else
-    curl -sL -o "$LAYER_DIR/bin/$NAME" "$URL"
+    curl -sfL -o "$LAYER_DIR/bin/$NAME" "$URL"
   fi
 
   chmod +x "$LAYER_DIR/bin/$NAME"

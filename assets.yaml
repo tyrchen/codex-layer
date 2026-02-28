@@ -35,6 +35,7 @@ tools:
   - name: rg
     repo: BurntSushi/ripgrep
     version: "15.1.0"
+    tag: "{version}"
     asset: "ripgrep-{version}-aarch64-unknown-linux-gnu.tar.gz"
     strip: 1
     extract_path: "ripgrep-{version}-aarch64-unknown-linux-gnu/rg"
