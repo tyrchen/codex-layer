@@ -1,0 +1,62 @@
+# Codex CLI Lambda Layer - Asset Configuration
+#
+# This file declares all binaries and libraries bundled into the Lambda Layer.
+# The build script (scripts/build-layer.sh) reads this file to assemble the layer.
+#
+# To add a new tool from a GitHub Release:
+#   1. Add an entry under `tools:`
+#   2. Set repo, version, asset pattern (use {version} placeholder)
+#   3. For tar archives: set strip and optionally extract_path
+#   4. For raw binaries: just set asset to the filename
+#
+# To add a new system package from Amazon Linux 2023:
+#   1. Add the package name to system.packages
+#   2. Add the binary name to system.bins
+#   3. Add any shared libraries needed to system.libs
+
+# Layer target architecture
+arch: aarch64
+platform: linux/arm64
+
+# ---------------------------------------------------------------------------
+# Codex CLI binary (from tyrchen/codex fork's lambda-build workflow)
+# ---------------------------------------------------------------------------
+codex:
+  repo: tyrchen/codex
+  workflow: lambda-build
+  artifact: codex-lambda-aarch64
+  tar_file: codex-aarch64-unknown-linux-musl.tar.gz
+  bin_name: codex
+
+# ---------------------------------------------------------------------------
+# Binary tools downloaded from GitHub Releases
+# ---------------------------------------------------------------------------
+tools:
+  - name: rg
+    repo: BurntSushi/ripgrep
+    version: "15.1.0"
+    asset: "ripgrep-{version}-aarch64-unknown-linux-gnu.tar.gz"
+    strip: 1
+    extract_path: "ripgrep-{version}-aarch64-unknown-linux-gnu/rg"
+
+  - name: jq
+    repo: jqlang/jq
+    version: "1.8.1"
+    tag: "jq-{version}"
+    asset: "jq-linux-arm64"
+
+# ---------------------------------------------------------------------------
+# System packages extracted from Amazon Linux 2023 (ARM64 container)
+# ---------------------------------------------------------------------------
+system:
+  packages:
+    - tree
+    - git-core
+  bins:
+    - tree
+    - git
+  libexec:
+    - git-core
+  libs:
+    - "libpcre2-8.so*"
+    - "libexpat.so*"

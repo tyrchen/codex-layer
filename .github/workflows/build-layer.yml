@@ -1,0 +1,54 @@
+# Build the Codex CLI Lambda Layer.
+#
+# Assembles a ZIP containing:
+#   - Codex CLI binary (from tyrchen/codex fork)
+#   - CLI tools (rg, jq, etc.) from GitHub Releases
+#   - System tools (tree, git) from Amazon Linux 2023
+#
+# Assets are declared in assets.yaml at the repo root.
+# To add a new tool, edit assets.yaml and push — no workflow changes needed.
+
+name: build-layer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [assets.yaml]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LAYER_DIR: /tmp/codex-layer
+  LAYER_ZIP: /tmp/codex-layer.zip
+
+jobs:
+  build:
+    name: Build Lambda Layer (aarch64)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Build layer
+        env:
+          GH_TOKEN: ${{ secrets.CODEX_REPO_TOKEN }}
+          LAYER_DIR: ${{ env.LAYER_DIR }}
+          LAYER_ZIP: ${{ env.LAYER_ZIP }}
+        run: scripts/build-layer.sh
+
+      - name: Upload layer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-layer
+          path: ${{ env.LAYER_ZIP }}
+          retention-days: 90
